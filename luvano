@@ -1,0 +1,705 @@
+LuvanoAuto/
+├── pom.xml
+└── src/
+    └── main/
+        ├── java/
+        │   └── luv/
+        │       └── LuvanoAutoApplication.java
+        └── resources/
+            └── static/
+                ├── index.html
+                └── qr.png
+package luv;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.Instant;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+
+@SpringBootApplication
+@RestController
+@CrossOrigin
+public class LuvanoAutoApplication {
+
+    private final Map<String, Map<String, Object>> bookings =
+            new ConcurrentHashMap<>();
+
+    public static void main(String[] args) {
+        SpringApplication.run(LuvanoAutoApplication.class, args);
+    }
+
+    @PostMapping("/api/bookings")
+    public Map<String, Object> createBooking(
+            @RequestBody Map<String, Object> data) {
+
+        String[] required = {
+                "name", "mobile", "location", "category",
+                "carDetails", "duration", "time",
+                "startDate", "total", "utr"
+        };
+
+        for (String field : required) {
+            Object value = data.get(field);
+
+            if (value == null || value.toString().isBlank()) {
+                throw new IllegalArgumentException(
+                        "Missing field: " + field);
+            }
+        }
+
+        String bookingId = "LA-" +
+                UUID.randomUUID()
+                        .toString()
+                        .substring(0, 8)
+                        .toUpperCase(Locale.ROOT);
+
+        Map<String, Object> booking = new LinkedHashMap<>(data);
+
+        booking.put("bookingId", bookingId);
+        booking.put("receivedAt", Instant.now().toString());
+        booking.put("paymentStatus", "UNVERIFIED");
+        booking.put("bookingStatus", "PENDING_CONFIRMATION");
+
+        bookings.put(bookingId, booking);
+
+        return Map.of(
+                "bookingId", bookingId,
+                "paymentStatus", "UNVERIFIED",
+                "bookingStatus", "PENDING_CONFIRMATION"
+        );
+    }
+
+    @GetMapping("/api/bookings")
+    public Collection<Map<String, Object>> getBookings() {
+        return bookings.values();
+    }
+}
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.luvanoauto</groupId>
+    <artifactId>luv-auto-booking</artifactId>
+    <version>1.0.0</version>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.3.5</version>
+        <relativePath/>
+    </parent>
+
+    <properties>
+        <java.version>17</java.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Luvano Auto | Car Care</title>
+
+<style>
+:root {
+    --navy: #071b2b;
+    --blue: #102f49;
+    --gold: #ffd928;
+    --green: #138b57;
+    --light: #f5f8fb;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: var(--light);
+    color: #122234;
+    line-height: 1.5;
+}
+
+header {
+    background: var(--navy);
+    color: white;
+    padding: 18px 5%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.logo {
+    font-size: 25px;
+    font-weight: bold;
+}
+
+.logo span {
+    color: var(--gold);
+}
+
+nav {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+}
+
+.btn {
+    background: var(--gold);
+    color: var(--navy);
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.hero {
+    background: linear-gradient(120deg, var(--navy), var(--blue));
+    color: white;
+    padding: 70px 6%;
+}
+
+.hero h1 {
+    font-size: clamp(35px, 6vw, 65px);
+    line-height: 1.1;
+}
+
+.hero h1 span {
+    color: var(--gold);
+}
+
+.hero p {
+    max-width: 600px;
+    font-size: 18px;
+}
+
+section {
+    padding: 45px 5%;
+}
+
+.container {
+    max-width: 1100px;
+    margin: auto;
+}
+
+.heading {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.heading h2 {
+    color: var(--navy);
+}
+
+.plans {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+}
+
+.card {
+    background: white;
+    border-radius: 14px;
+    padding: 22px;
+    box-shadow: 0 5px 20px #00000010;
+}
+
+.price {
+    color: var(--navy);
+    font-size: 25px;
+    font-weight: bold;
+}
+
+.booking {
+    background: #eaf0f5;
+}
+
+.booking-layout {
+    display: grid;
+    grid-template-columns: 1fr 1.3fr;
+    gap: 25px;
+    align-items: start;
+}
+
+.info {
+    background: var(--navy);
+    color: white;
+    border-radius: 15px;
+    padding: 25px;
+}
+
+form {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.full {
+    grid-column: 1 / -1;
+}
+
+label {
+    font-weight: bold;
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #cbd7e2;
+    border-radius: 8px;
+    font: inherit;
+}
+
+.total {
+    background: #f4f7fa;
+    padding: 18px;
+    border-radius: 10px;
+    margin: 20px 0;
+}
+
+.total strong {
+    font-size: 25px;
+    color: var(--navy);
+}
+
+.submit {
+    width: 100%;
+    background: var(--green);
+    color: white;
+    padding: 15px;
+    border: none;
+    border-radius: 9px;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.payment {
+    margin-top: 20px;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.payment img {
+    width: 220px;
+    max-width: 100%;
+    display: block;
+    margin: 15px auto;
+}
+
+.upi {
+    font-weight: bold;
+    color: var(--navy);
+    overflow-wrap: anywhere;
+}
+
+footer {
+    background: var(--navy);
+    color: white;
+    text-align: center;
+    padding: 30px;
+}
+
+@media(max-width: 750px) {
+    .booking-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .full {
+        grid-column: auto;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <div class="logo">LUVANO <span>AUTO</span></div>
+
+    <nav>
+        <a href="#plans">Plans</a>
+        <a href="#booking">Book Now</a>
+        <a href="#contact">Contact</a>
+    </nav>
+</header>
+
+<section class="hero">
+    <div class="container">
+        <h1>YOUR CAR.<br><span>OUR CARE.</span></h1>
+
+        <p>
+            Premium doorstep car cleaning.
+            Daily exterior cleaning with weekly shining spray.
+        </p>
+
+        <a href="#booking" class="btn">Book a Cleaning</a>
+
+        <p>Morning Service: 4:00 AM – 10:00 AM</p>
+    </div>
+</section>
+
+<section id="plans">
+    <div class="container">
+
+        <div class="heading">
+            <h2>Monthly & Yearly Plans</h2>
+            <p>Choose the right plan for your vehicle.</p>
+        </div>
+
+        <div class="plans">
+
+            <div class="card">
+                <h3>Small Car</h3>
+                <div class="price">₹500/month</div>
+            </div>
+
+            <div class="card">
+                <h3>Sedan</h3>
+                <div class="price">₹600/month</div>
+            </div>
+
+            <div class="card">
+                <h3>SUV / 7-Seater</h3>
+                <div class="price">₹800/month</div>
+            </div>
+
+            <div class="card">
+                <h3>Premium</h3>
+                <div class="price">₹1,500/month</div>
+            </div>
+
+            <div class="card">
+                <h3>Ultra-Premium</h3>
+                <div class="price">₹3,000/month</div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<section id="booking" class="booking">
+    <div class="container">
+
+        <div class="heading">
+            <h2>Book Your Car Cleaning</h2>
+            <p>Complete the form and proceed to payment.</p>
+        </div>
+
+        <div class="booking-layout">
+
+            <div class="info">
+                <h2>Luvano Auto</h2>
+
+                <p>Daily doorstep car cleaning</p>
+                <p>Weekly shining spray included</p>
+                <p>Monthly and yearly subscriptions</p>
+                <p>Morning service: 4 AM – 10 AM</p>
+
+                <hr>
+
+                <p>WhatsApp: +91 97948 80034</p>
+            </div>
+
+            <form id="bookingForm">
+
+                <div class="form-grid">
+
+                    <div class="field">
+                        <label for="name">Full Name *</label>
+                        <input id="name" required>
+                    </div>
+
+                    <div class="field">
+                        <label for="mobile">Mobile Number *</label>
+                        <input id="mobile"
+                               type="tel"
+                               pattern="[0-9]{10}"
+                               maxlength="10"
+                               required>
+                    </div>
+
+                    <div class="field full">
+                        <label for="location">Service Address *</label>
+                        <input id="location" required>
+                    </div>
+
+                    <div class="field">
+                        <label for="category">Car Category *</label>
+                        <select id="category" required>
+                            <option value="">Select Car</option>
+                            <option value="500">Small Car</option>
+                            <option value="600">Sedan</option>
+                            <option value="800">SUV / 7-Seater</option>
+                            <option value="1500">Premium</option>
+                            <option value="3000">Ultra-Premium</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="carDetails">Car Model *</label>
+                        <input id="carDetails" required>
+                    </div>
+
+                    <div class="field">
+                        <label for="duration">Subscription *</label>
+                        <select id="duration" required>
+                            <option value="Monthly">Monthly</option>
+                            <option value="Yearly">Yearly</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="time">Preferred Time *</label>
+                        <select id="time" required>
+                            <option>4 AM – 6 AM</option>
+                            <option>6 AM – 8 AM</option>
+                            <option>8 AM – 10 AM</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="startDate">Start Date *</label>
+                        <input id="startDate" type="date" required>
+                    </div>
+
+                    <div class="field">
+                        <label for="utr">UPI Transaction ID / UTR *</label>
+                        <input id="utr" required>
+                    </div>
+
+                    <div class="field full">
+                        <label for="notes">Additional Notes</label>
+                        <textarea id="notes" rows="3"></textarea>
+                    </div>
+
+                </div>
+
+                <div class="total">
+                    <p>Total Amount</p>
+                    <strong id="totalPrice">₹500</strong>
+                    <p id="totalNote">Monthly subscription</p>
+                </div>
+
+                <button type="button"
+                        class="btn"
+                        onclick="openPayment()">
+                    Pay with PhonePe
+                </button>
+
+                <div class="payment" id="paymentBox" hidden>
+                    <h3>Pay using PhonePe</h3>
+
+                    <img src="/qr.png" alt="PhonePe UPI QR Code">
+
+                    <p>UPI ID</p>
+                    <p class="upi">maurya.mahendar1@axl</p>
+
+                    <p>
+                        Scan the QR code or open your UPI app.
+                        Enter the amount shown above.
+                    </p>
+
+                    <p>
+                        After payment, enter your UTR above
+                        and submit the booking.
+                    </p>
+                </div>
+
+                <button type="submit" class="submit">
+                    Book Now & Send WhatsApp Message
+                </button>
+
+                <p>
+                    Your booking will remain pending until
+                    payment is verified by the owner.
+                </p>
+
+            </form>
+        </div>
+    </div>
+</section>
+
+<footer id="contact">
+    <h2>LUVANO AUTO</h2>
+    <p>Daily Car Cleaning • Doorstep Service</p>
+    <p>WhatsApp: +91 97948 80034</p>
+</footer>
+
+<script>
+const prices = {
+    "500": 500,
+    "600": 600,
+    "800": 800,
+    "1500": 1500,
+    "3000": 3000
+};
+
+const category = document.getElementById("category");
+const duration = document.getElementById("duration");
+
+function getTotal() {
+    const price = prices[category.value] || 0;
+
+    return duration.value === "Yearly"
+        ? price * 12
+        : price;
+}
+
+function updateTotal() {
+    const total = getTotal();
+
+    document.getElementById("totalPrice").textContent =
+        "₹" + total.toLocaleString("en-IN");
+
+    document.getElementById("totalNote").textContent =
+        duration.value + " subscription";
+}
+
+category.addEventListener("change", updateTotal);
+duration.addEventListener("change", updateTotal);
+
+function openPayment() {
+    if (!category.value) {
+        alert("Please select your car category first.");
+        return;
+    }
+
+    document.getElementById("paymentBox").hidden = false;
+
+    const total = getTotal();
+
+    const upiUrl =
+        "upi://pay?pa=maurya.mahendar1@axl" +
+        "&pn=Vivek%20Maurya" +
+        "&am=" + total +
+        "&cu=INR" +
+        "&tn=Luvano%20Auto%20Booking";
+
+    window.location.href = upiUrl;
+}
+
+document.getElementById("bookingForm")
+.addEventListener("submit", async function(event) {
+
+    event.preventDefault();
+
+    const data = {
+        name: document.getElementById("name").value,
+        mobile: document.getElementById("mobile").value,
+        location: document.getElementById("location").value,
+        category: category.options[category.selectedIndex].text,
+        carDetails: document.getElementById("carDetails").value,
+        duration: duration.value,
+        time: document.getElementById("time").value,
+        startDate: document.getElementById("startDate").value,
+        total: getTotal(),
+        utr: document.getElementById("utr").value,
+        notes: document.getElementById("notes").value
+    };
+
+    try {
+        const response = await fetch("/api/bookings", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+            throw new Error("Booking failed");
+        }
+
+        const result = await response.json();
+
+        const message =
+            "LUVANO AUTO - NEW BOOKING\n\n" +
+            "Booking ID: " + result.bookingId + "\n" +
+            "Name: " + data.name + "\n" +
+            "Mobile: " + data.mobile + "\n" +
+            "Address: " + data.location + "\n" +
+            "Car: " + data.category + "\n" +
+            "Model: " + data.carDetails + "\n" +
+            "Plan: " + data.duration + "\n" +
+            "Start Date: " + data.startDate + "\n" +
+            "Amount: ₹" + data.total + "\n" +
+            "UTR: " + data.utr + "\n" +
+            "Payment Status: UNVERIFIED\n" +
+            "Booking Status: PENDING CONFIRMATION";
+
+        const whatsappUrl =
+            "https://wa.me/919794880034?text=" +
+            encodeURIComponent(message);
+
+        window.open(whatsappUrl, "_blank");
+
+        alert(
+            "Booking request saved.\n" +
+            "Booking ID: " + result.bookingId +
+            "\nPayment is not verified yet."
+        );
+
+    } catch (error) {
+        alert("Unable to submit booking. Please try again.");
+    }
+});
+
+updateTotal();
+</script>
+
+</body>
+</html>
